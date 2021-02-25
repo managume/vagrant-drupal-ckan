@@ -1,7 +1,2 @@
 .vagrant
-src/ckan/configuration/*
-!src/ckan/configuration/*.gitkeep
-src/ckan/extensions/*
-!src/ckan/extensions/*.gitkeep
-src/ckan/project/*
-!src/ckan/project/*.gitkeep
+src/**/*

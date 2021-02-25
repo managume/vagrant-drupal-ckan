@@ -143,6 +143,16 @@
     - name: Instalar Composer 2
       shell: curl -sS https://getcomposer.org/installer | php -- --install-dir=/usr/local/bin/ --filename=composer
 
+    # INSTALAR DRUPAL (CAMBIAR CREATE PROJECT POR UN GIT CLONE)
+    - name: Instalar Drupal 9
+      composer:
+        command: create-project
+        arguments: drupal/recommended-project .
+        working_dir: /var/www/html/
+        prefer_dist: yes 
+      ignore_errors: yes
+      become_user: vagrant
+        
     # IMPORTAR BASE DE DATOS DE REFERENCIA A DRUPAL
     # To do
 

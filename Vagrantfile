@@ -9,10 +9,10 @@ Vagrant.configure("2") do |config|
   config.vm.network :forwarded_port, guest: 8983, host: 8983
   config.vm.network :forwarded_port, guest: 5432, host: 5432
 
-  config.vm.synced_folder "src/drupal", "/var/www/html/drupal"
-  config.vm.synced_folder "src/ckan/configuration", "/etc/ckan/default"
-  config.vm.synced_folder "src/ckan/project", "/usr/lib/ckan/default/src/ckan/ckan"
-  config.vm.synced_folder "src/ckan/extensions", "/usr/lib/ckan/default/src/ckan/ckanext"
+  config.vm.synced_folder "src/drupal", "/var/www/html/", create: true
+  config.vm.synced_folder "src/ckan/configuration", "/etc/ckan/default", create: true
+  config.vm.synced_folder "src/ckan/project", "/usr/lib/ckan/default/src/ckan/ckan", create: true
+  config.vm.synced_folder "src/ckan/extensions", "/usr/lib/ckan/default/src/ckan/ckanext", create: true
   
   config.vm.provision :ansible_local do |ansible|
     ansible.become = true
