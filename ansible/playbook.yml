@@ -77,7 +77,11 @@
       become: true
       become_user: postgres
 
-    # INSTALAR CKAN Y SUS DEPENDENCIAS
+    # INSTALAR Y CONFIGURAR CKAN
+    - name: Eliminar directorios existentes
+      shell: rm -rf /usr/lib/ckan
+      ignore_errors: yes
+
     - name: Instalar las dependencias de CKAN
       apt:
         pkg:
@@ -88,11 +92,18 @@
           - supervisor
         state: present
         update_cache: yes
-
+    
     - name: Instalar el paquete oficial de CKAN 2.9
       apt:
         deb: http://packaging.ckan.org/python-ckan_2.9-py3-focal_amd64.deb
-
+    
+    - name: Implantar CKAN.INI por defecto
+      copy:
+        src: config/ckan.ini
+        dest: /etc/ckan/default/ckan.ini
+        force: yes
+      ignore_errors: yes
+      
     # INSTALAR Y CONFIGURAR SOLR
     - name: Instalar Apache Solr
       apt:
@@ -165,11 +176,20 @@
       apt:
         autoremove: yes
 
+    # INICIALIZAR BASE DE DATOS CKAN
+    - name: Inicializar base de datos CKAN
+      shell: /usr/lib/ckan/default/bin/ckan --config=/etc/ckan/default/ckan.ini db init
+      become_user: vagrant
+
     # REFRESAR SERVICIOS
     - name: Reiniciar Solr
       service:
         name: tomcat9
         state: restarted
+    
+    - name: Recargar supervisor
+      shell: sudo surpervisorctl reload
+      become: yes
 
     - name:
       service:
