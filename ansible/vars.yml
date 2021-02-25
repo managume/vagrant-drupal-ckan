@@ -1,0 +1,7 @@
+---
+ckan_db_user: ckan_default
+ckan_db_password: ckan_default
+datastore_db_user: datastore_default
+datastore_db_password: datastore_default
+drupal_db_user: drupal_default
+drupal_db_password: drupal_default

@@ -1,0 +1,167 @@
+---
+- hosts: all
+  vars_files:
+    - vars.yml
+  tasks:
+    # INSTALAR PYTHON Y LIBRERIAS
+    - name: Instalar Python y librerias
+      apt:
+        pkg:
+          - python3
+          - python3-dev
+          - python3-pip
+          - python3-venv
+          - python3-psycopg2
+        state: present
+        update_cache: yes
+
+    # INSTALAR Y CONFIGURAR BASE DE DATOS
+    - name: Instalar Postgresql
+      apt:
+        name: postgresql
+        state: present
+        update_cache: yes
+
+    - name: Crear base de datos ckan_default
+      remote_user: root
+      become: true
+      become_user: postgres
+      postgresql_db:
+        name: ckan_default
+        encoding: UTF-8
+        state: present
+
+    - name: Crear usuario ckan_default
+      postgresql_user:
+        db: ckan_default
+        name: "{{ckan_db_user}}"
+        role_attr_flags: NOSUPERUSER,NOCREATEDB,NOCREATEROLE
+        password: "{{ckan_db_password}}"
+        state: present
+      become: true
+      become_user: postgres
+
+    - name: Crear base de datos datastore_default
+      postgresql_db:
+        name: datastore_default
+        owner: ckan_default
+        encoding: UTF-8
+        state: present
+      become: true
+      become_user: postgres
+
+    - name: Crear usuario datastore_default
+      postgresql_user:
+        name: "{{datastore_db_user}}"
+        role_attr_flags: NOSUPERUSER,NOCREATEDB,NOCREATEROLE
+        password: "{{datastore_db_password}}"
+        state: present
+      become: true
+      become_user: postgres
+
+    - name: Crear base de datos drupal
+      postgresql_db:
+        name: drupal
+        encoding: UTF-8
+        state: present
+      become: true
+      become_user: postgres
+
+    - name: Crear usuario drupal
+      postgresql_user:
+        db: drupal
+        name: "{{drupal_db_user}}"
+        role_attr_flags: NOSUPERUSER,NOCREATEDB,NOCREATEROLE
+        password: "{{drupal_db_password}}"
+        state: present
+      become: true
+      become_user: postgres
+
+    # INSTALAR CKAN Y SUS DEPENDENCIAS
+    - name: Instalar las dependencias de CKAN
+      apt:
+        pkg:
+          - git
+          - libpq5
+          - redis-server
+          - nginx
+          - supervisor
+        state: present
+        update_cache: yes
+
+    - name: Instalar el paquete oficial de CKAN 2.9
+      apt:
+        deb: http://packaging.ckan.org/python-ckan_2.9-py3-focal_amd64.deb
+
+    # INSTALAR Y CONFIGURAR SOLR
+    - name: Instalar Apache Solr
+      apt:
+        name: solr-tomcat
+        state: present
+
+    - name: Renombrar schema.xml a schema.xml.bak
+      shell: mv /etc/solr/conf/schema.xml /etc/solr/conf/schema.xml.bak
+
+    - name: Añadir schema.xml en Solr con enlace simbólico
+      file:
+        src: "/usr/lib/ckan/default/src/ckan/ckan/config/solr/schema.xml"
+        dest: "/etc/solr/conf/schema.xml"
+        state: link
+    
+    # CONFIGURAR TOMCAT
+    - name: Configurar puerto 8983 en Tomcat
+      copy:
+        src: config/server.xml
+        dest: /etc/tomcat9/server.xml
+
+    # INSTALAR EXTENSIONES DE CKAN
+    # To do
+
+    # IMPORTAR BASE DE DATOS DE REFERENCIA A CKAN
+    # To do
+
+    # INSTALAR DRUPAL Y SUS DEPENDENCIAS
+    - name: Instalar servidor Apache
+      apt:
+        name: apache2
+        state: present
+
+    - name: Instalar PHP 7.4
+      apt:
+        pkg:
+          - php7.4
+          - php7.4-dev
+          - php7.4-common
+          - php7.4-zip
+          - php7.4-curl
+          - php7.4-json
+          - php7.4-xml
+          - php7.4-mbstring
+          - php7.4-gd
+        state: present
+
+    - name: Instalar Composer 2
+      shell: curl -sS https://getcomposer.org/installer | php -- --install-dir=/usr/local/bin/ --filename=composer
+
+    # IMPORTAR BASE DE DATOS DE REFERENCIA A DRUPAL
+    # To do
+
+    # TAREAS DE LIMPIEZA
+    - name: Eliminar paquetes en desuso de la caché
+      apt:
+        autoclean: yes
+
+    - name: Eliminar dependencias no requeridas
+      apt:
+        autoremove: yes
+
+    # REFRESAR SERVICIOS
+    - name: Reiniciar Solr
+      service:
+        name: tomcat9
+        state: restarted
+
+    - name:
+      service:
+        name: nginx
+        state: restarted
