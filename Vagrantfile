@@ -5,8 +5,15 @@ Vagrant.configure("2") do |config|
   config.vm.box = "ubuntu/focal64"
   config.vm.hostname = "s2city"
 
+  # PROXY HTTP (NGINX)
   config.vm.network :forwarded_port, guest: 80, host: 80
+  # PROXY HTTPS (NGINX)
+  config.vm.network :forwarded_port, guest: 443, host: 443
+  # APACHE (DRUPAL)
+  config.vm.network :forwarded_port, guest: 8000, host: 8000
+  # SOLR (TOMCAT)
   config.vm.network :forwarded_port, guest: 8983, host: 8983
+  # POSTGRESQL
   config.vm.network :forwarded_port, guest: 5432, host: 5432
 
   config.vm.synced_folder "src/drupal", "/var/www/html/", create: true
