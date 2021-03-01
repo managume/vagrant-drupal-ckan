@@ -5,3 +5,6 @@ datastore_db_user: datastore_default
 datastore_db_password: datastore_default
 drupal_db_user: drupal_default
 drupal_db_password: drupal_default
+sysadmin_user: admin
+sysadmin_password: admin
+sysadmin_email: admin@domain.com

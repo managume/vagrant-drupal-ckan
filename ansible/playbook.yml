@@ -102,7 +102,6 @@
         src: config/ckan.ini
         dest: /etc/ckan/default/ckan.ini
         force: yes
-      ignore_errors: yes
       
     # INSTALAR Y CONFIGURAR SOLR
     - name: Instalar Apache Solr
@@ -136,6 +135,18 @@
       apt:
         name: apache2
         state: present
+    
+    - name: Editar archivo ports.conf
+      copy:
+        src: config/ports.conf
+        dest: /etc/apache2/ports.conf
+        force: yes
+
+    - name: Editar 000-default.conf
+      copy:
+        src: config/000-default.conf
+        dest: /etc/apache2/sites-available/000-default.conf
+        force: yes
 
     - name: Instalar PHP 7.4
       apt:
@@ -153,20 +164,7 @@
 
     - name: Instalar Composer 2
       shell: curl -sS https://getcomposer.org/installer | php -- --install-dir=/usr/local/bin/ --filename=composer
-
-    # INSTALAR DRUPAL (CAMBIAR CREATE PROJECT POR UN GIT CLONE)
-    - name: Instalar Drupal 9
-      composer:
-        command: create-project
-        arguments: drupal/recommended-project .
-        working_dir: /var/www/html/
-        prefer_dist: yes 
-      ignore_errors: yes
-      become_user: vagrant
         
-    # IMPORTAR BASE DE DATOS DE REFERENCIA A DRUPAL
-    # To do
-
     # TAREAS DE LIMPIEZA
     - name: Eliminar paquetes en desuso de la caché
       apt:
@@ -177,19 +175,45 @@
         autoremove: yes
 
     # INICIALIZAR BASE DE DATOS CKAN
+    - name: Borrar base de datos CKAN
+      shell: /usr/lib/ckan/default/bin/ckan --config=/etc/ckan/default/ckan.ini db clean --yes
+      become_user: vagrant
+
     - name: Inicializar base de datos CKAN
       shell: /usr/lib/ckan/default/bin/ckan --config=/etc/ckan/default/ckan.ini db init
       become_user: vagrant
+
+    # APLICAR PERMISOS
+    - name: Ajustes de permisos en CKAN
+      shell: chown -R www-data:www-data /var/lib/ckan
+      become: yes
+      become_user: root
+
+    - name: Ajustes de permisos en CKAN
+      shell: chmod -R 777 /var/lib/ckan
+      become: yes
+      become_user: root
+
+    # CREAR USUARIO SYSADMIN
+    - name: Crear usuario sysadmin de CKAN
+      shell: ckan -c /etc/ckan/default/ckan.ini sysadmin "{{sysadmin_user}}" email="{{sysadmin_email}}" name="{{sysadmin_user}}" password="{{sysadmin_password}}"
 
     # REFRESAR SERVICIOS
     - name: Reiniciar Solr
       service:
         name: tomcat9
         state: restarted
+
+    - name:
+      service:
+        name: apache2
+        state: restarted
     
     - name: Recargar supervisor
-      shell: sudo surpervisorctl reload
       become: yes
+      become_user: root
+      shell: supervisorctl reload
+      ignore_errors: yes
 
     - name:
       service:
