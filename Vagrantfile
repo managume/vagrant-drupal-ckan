@@ -23,7 +23,7 @@ Vagrant.configure("2") do |config|
   
   config.vm.provision :ansible_local do |ansible|
     ansible.become = true
-    ansible.config_file="ansible/ansible.cfg"
+    ansible.config_file = "ansible/ansible.cfg"
     ansible.playbook = "ansible/playbook.yml"
   end
 end

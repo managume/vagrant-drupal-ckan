@@ -194,17 +194,13 @@
       become: yes
       become_user: root
 
-    # CREAR USUARIO SYSADMIN
-    - name: Crear usuario sysadmin de CKAN
-      shell: ckan -c /etc/ckan/default/ckan.ini sysadmin "{{sysadmin_user}}" email="{{sysadmin_email}}" name="{{sysadmin_user}}" password="{{sysadmin_password}}"
-
     # REFRESAR SERVICIOS
     - name: Reiniciar Solr
       service:
         name: tomcat9
         state: restarted
 
-    - name:
+    - name: Reiniciar servidor Apache
       service:
         name: apache2
         state: restarted
@@ -215,7 +211,32 @@
       shell: supervisorctl reload
       ignore_errors: yes
 
-    - name:
+    - name: Reiniciar servidor Nginx
       service:
         name: nginx
         state: restarted
+
+    # IMPORTAR CLAVES SSH
+    - name: Importar directorio de ssh keys
+      copy:
+        src: "~/.ssh"
+        dest: "~/.ssh"
+      ignore_errors: yes
+
+    # CREAR SYMLINK PARA EL COMANDO CKAN
+    - name: Crear symlink para comando ckan
+      become: yes
+      file:
+        src: "/usr/lib/ckan/default/bin/ckan"
+        dest: "/usr/bin/ckan"
+        state: link
+      ignore_errors: yes
+
+    # CREAR USUARIO SYSADMIN
+    - name: Crear usuario sysadmin de CKAN
+      expect:
+        command: ckan -c /etc/ckan/default/ckan.ini sysadmin add "{{sysadmin_user}}" email="{{sysadmin_email}}" name="{{sysadmin_user}}" password="{{sysadmin_password}}"
+        responses:
+          Question:
+            - Y
+      ignore_errors: yes
